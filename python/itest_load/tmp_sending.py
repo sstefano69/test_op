@@ -3,11 +3,11 @@
 """ test  """
 
 import sys
+import importlib
 
 # Template module loading
 module_template = "tmp_template_translator"
-__import__(module_template)
-plugin = sys.modules[module_template]
+plugin = importlib.import_module(module_template)
 
 
 def sending_test1():
@@ -23,7 +23,7 @@ def load(module_to_import):
     global plugin
 
     try:
-        __import__(module_to_import)
+        plugin = importlib.import_module(module_to_import)
 
     except ImportError:
         print ("Unusable module {0}".format(module_to_import))
