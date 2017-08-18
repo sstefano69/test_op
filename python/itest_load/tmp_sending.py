@@ -45,18 +45,17 @@ def load(module_to_import):
 if __name__ == "__main__":
 
     print ("Test 1 ==============================================")
+    load("tmp_omf_translator")
+    sending_test1()
 
-    # load("tmp_omf_translator")
-    # sending_test1()
-    #
-    # print("Test 2 ==============================================")
-    # load("tmp_xxx_translator")
-    # sending_test1()
-    #
-    # try:
-    #     print("Test 3 ==============================================")
-    #     load("tmp_none")
-    #     sending_test1()
-    #
-    # except ImportError:
-    #     print("Exception ImportError")
+    print("Test 2 ==============================================")
+    load("tmp_xxx_translator")
+    sending_test1()
+
+    try:
+        print("Test 3 ==============================================")
+        load("tmp_none")
+        sending_test1()
+
+    except ImportError:
+        print("Exception ImportError")
