@@ -1,13 +1,324 @@
+### DELEET  #########################################################################################:
+
+DELETE FROM  foglamp.readings;
+
+### RUN ########################################################################################:
+
+DELETE FROM foglamp.omf_created_objects;
+UPDATE foglamp.streams SET last_object=0, ts=now() WHERE id=1;
+UPDATE foglamp.statistics SET value=0;
+DELETE FROM foglamp.configuration WHERE "key"='OMF_TRANS';
+DELETE FROM foglamp.configuration WHERE "key"='OMF_TR_1';
+DELETE FROM foglamp.configuration WHERE "key"='SEND_PR_1';
+DELETE FROM foglamp.configuration WHERE "key"='OMF_TYPES';
+
+
+### SELECT ########################################################################################:
+
+SELECT id,asset_code,reading,user_ts FROM foglamp.readings;
+
+SELECT * FROM foglamp.omf_created_objects;
+
+SELECT * FROM  foglamp.streams;
+
+
+
+#
+# stream
+#
+SELECT * FROM foglamp.destinations;
+
+SELECT * FROM  foglamp.streams;
+
+
+
+
+### Demo #########################################################################################:
+
+
+SELECT * FROM  foglamp.streams;
+
+SELECT id,asset_code,reading,user_ts FROM foglamp.readings WHERE id > 0 and id <= 0+500000 and asset_code like '%acc%' ORDER by USER_ts;
+
+
+SELECT id,asset_code,reading,user_ts  FROM foglamp.readings
+
+UPDATE foglamp.readings SET asset_code='TI sensorTag/acc' WHERE asset_code='TI sensorTag/accelerometer';
+
+
+UPDATE foglamp.readings SET asset_code='TI sensorTag/accelerometer'  WHERE asset_code='TI sensorTag/humidity';
+
+UPDATE foglamp.readings SET asset_code='TI sensorTag/accelerometer' WHERE asset_code='TI sensorTag/acc';
+
+
+
+### OSI SQL #########################################################################################:
+
+SELECT * from picomp2 WHERE tag like '%omf_translator%accelero%'
+
+
+###  #########################################################################################:
+SELECT asset_code FROM foglamp.omf_created_objects WHERE configuration_key='OMF_TR_1' and type_id=706;
+
+SELECT asset_code FROM foglamp.omf_created_objects;
+
+### Dev #########################################################################################:
+
+UPDATE foglamp.streams SET last_object=0, ts=now() WHERE id=1;
+
+UPDATE foglamp.statistics SET value=0;
+
+DELETE FROM foglamp.omf_created_objects;
+
+DELETE FROM foglamp.configuration WHERE "key"='SEND_PR_1';
+
+DELETE FROM foglamp.configuration WHERE "key"='OMF_TR_1';
+
+DELETE FROM foglamp.configuration WHERE key='OMF_TYPES';
+
+
+#
+#
+#
+UPDATE  foglamp.streams SET active=True WHERE id=1;
+
+
+SELECT *  FROM foglamp.readings WHERE id >= 0;
+
+SELECT id,asset_code,reading,user_ts FROM foglamp.readings WHERE id > 0 and id <= 0+500000 and asset_code like '%acc%' ORDER by USER_ts;
+
+
+
+SELECT max(id)  FROM foglamp.readings;
+
+SELECT count(*)  FROM foglamp.readings;
+
+
+SELECT * FROM foglamp.destinations;
+
+SELECT * FROM  foglamp.streams;
+
+
+SELECT * FROM foglamp.configuration;
+
+SELECT * FROM foglamp.omf_created_objects ORDER by configuration_key,type_id Desc ,asset_code ;
+
+
+SELECT * FROM foglamp.statistics ORDER BY key;
+
+
+
+#
+DELETE FROM  foglamp.omf_created_objects WHERE configuration_key='OMF_TR_1' AND type_id=738;
+
+SELECT * FROM foglamp.readings WHERE asset_code like '%gyr%' ORDER by USER_ts;
+
+
+SELECT * FROM foglamp.readings WHERE asset_code like '%acc%' ORDER by USER_ts;
+
+#SELECT * FROM foglamp.readings WHERE id > 0 and id <= 0+50 and asset_code like '%acc%' ORDER by USER_ts;
+
+
+
+SELECT * FROM foglamp.streams WHERE id=1 and active=True
+
+SELECT * FROM foglamp.streams WHERE id=1 and active=False
+
+
+
+#
+# stream
+#
+SELECT * FROM foglamp.destinations;
+
+
+SELECT * FROM  foglamp.stream;
+
+
+#
+# schedules
+#
+SELECT * FROM scheduled_processes;
+
+SELECT * FROM foglamp.schedules;
+
+SELECT * FROM foglamp.tasks order by process_name;
+
+
+DELETE FROM foglamp.schedules WHERE process_name='purge';
+
+DELETE FROM foglamp.schedules WHERE process_name='statistics to pi';
+
+
+insert into foglamp.scheduled_processes (name, script) values ('sending process', '["python3", "-m", "foglamp.sending_process", "-s", "1", "-d", "2"]');
+
+
+insert into foglamp.scheduled_processes (name, script) values ('sending process', '["python3", "-m", "foglamp.sending_process", "-s 1 -d 2"]');
+
+insert into foglamp.schedules(id, schedule_name, process_name, schedule_type,
+schedule_time, schedule_interval, exclusive)
+values ('2b614d26-760f-11e7-b5a5-be2e44b06b34', 'sending process', 'sending process', 3,
+NULL, '00:00:05', true);
+
+
+DELETE FROM foglamp.tasks WHERE process_name='sending process';
+
+DELETE FROM foglamp.schedules WHERE process_name='sending process';
+
+DELETE FROM foglamp.scheduled_processes WHERE name='sending process';
+
+
+
+
+###  ######################################################################################################:
+
+### PI Server test #########################################################################################:
+
+SELECT COUNT(*) tag from picomp2 WHERE tag like '%omf_translator%'
+
+DELETE from picomp2 WHERE tag like '%omf_translator%'
+
+
+SELECT *  from picomp2 WHERE tag like '%omf_translator%mouse%'
+
+
+SELECT COUNT(*) tag from picomp2 WHERE tag like '%omf_translator%mouse%'
+
+SELECT COUNT(*) tag from picomp2 WHERE tag like '%omf_translator%gyrosc%'
+
+
+### Testing #########################################################################################:
+
+
+UPDATE foglamp.configuration SET "value" = jsonb_set(value,'{blockSize, value}', '1000'::jsonb) WHERE key='SEND_PR_1';
+
+SELECT   value->'blockSize'->'value' FROM foglamp.configuration  WHERE key='SEND_PR_1';
+
+
+###  #########################################################################################:
+
+DROP TABLE foglamp.omf_created_objects;
+
+CREATE TABLE foglamp.omf_created_objects (
+    configuration_key   character(10)			NOT NULL,                             -- FK to foglamp.configuration
+    type_id             integer           	    NOT NULL,                             -- Identifies the specific PI Server type
+    asset_code			character varying(50)   NOT NULL,
+
+    CONSTRAINT omf_created_objects_pkey PRIMARY KEY (configuration_key,type_id, asset_code)
+        USING INDEX TABLESPACE foglamp,
+    CONSTRAINT omf_created_objects_fk1 FOREIGN KEY (configuration_key)
+        REFERENCES foglamp.configuration (key) MATCH SIMPLE
+            ON UPDATE NO ACTION
+            ON DELETE NO ACTION )
+    WITH ( OIDS = FALSE )
+    TABLESPACE foglamp;
+
+COMMENT ON TABLE foglamp.streams IS
+'Tracks types already created into PI Server.';
+
+ALTER TABLE foglamp.omf_created_objects OWNER to foglamp;
+
+SELECT * FROM foglamp.omf_created_objects;
+
+###  #########################################################################################:
+
+DELETE FROM foglamp.omf_created_objects;
+
+#  DELETE FROM foglamp.readings;
+
+UPDATE foglamp.streams SET last_object=0, ts=now() WHERE id=1;
+
+UPDATE foglamp.statistics SET value=0;
+
+DELETE FROM foglamp.readings WHERE  asset_code='wall clock';
+
+
+DELETE FROM foglamp.configuration WHERE key='OMF_TRANS';
+
+DELETE FROM foglamp.configuration WHERE key='OMF_TR_1';
+
+DELETE FROM foglamp.configuration WHERE key='SEND_PR_1';
+
+
+SELECT * FROM foglamp.readings WHERE  asset_code='wall clock';
+
+SELECT max(id)  FROM foglamp.readings;
+
+
+SELECT count(*)  FROM foglamp.readings;
+
+SELECT *  FROM foglamp.readings WHERE id >= 0;
+
+SELECT * FROM foglamp.readings WHERE asset_code like '%mouse%' ORDER by USER_ts;
+
+
+SELECT count(*) FROM foglamp.readings WHERE id > 82030 and id <= 82030+15000 and asset_code like '%mouse%' ;
+
+
+SELECT * FROM foglamp.readings WHERE  asset_code like '%gyrosc%' ORDER by USER_ts;
+
 ### Sending ######################################################################################################:
+
+
+SELECT * FROM foglamp.statistics ORDER BY key;
+
+SELECT * FROM foglamp.configuration;
+
+
+SELECT * FROM  foglamp.streams;
+
+SELECT *  FROM foglamp.readings WHERE id >= 0 ORDER BY ID;
+
+
+UPDATE foglamp.streams SET last_object=4110, ts=now() WHERE id=1;
+
+
+###  #########################################################################################:
+
+SELECT * FROM foglamp.configuration WHERE key='SEND_PR_1';
+
+# omf_translator_new
+UPDATE foglamp.configuration SET "value" = jsonb_set(value,'{translator, value}', '"omf_translator_new"'::jsonb) WHERE key='SEND_PR_1';
+
+# empty_translator
+UPDATE foglamp.configuration SET "value" = jsonb_set(value,'{translator, value}', '"empty_translator"'::jsonb) WHERE key='SEND_PR_1';
+
+
+SELECT value->'translator'->'value' FROM foglamp.configuration  WHERE key='SEND_PR_1';
+
+###  #########################################################################################:
+
+SELECT count(*)  FROM foglamp.readings;
+
+SELECT max(id)  FROM foglamp.readings;
+
+
+SELECT *  FROM foglamp.readings WHERE id >= 0;
+
+SELECT *  FROM foglamp.readings WHERE id >= 0 ORDER BY user_ts LIMIT 3 ;
+
+SELECT *  FROM foglamp.readings WHERE id >= 0 ORDER BY user_ts FETCH FIRST 3 ROWS ONLY;
+
+
+###  ######################################################################################################:
+
+
+
+DELETE FROM foglamp.configuration WHERE key='OMF_TR_1';
+
+DELETE FROM foglamp.configuration WHERE key='SEND_PR_1';
+
+
 
 SELECT * FROM foglamp.destinations;
 
 SELECT * FROM foglamp.streams;
 
+# Test
 
 ### perfroamnce ######################################################################################################:
 
-SELECT * FROM  foglamp.streams;
+
 
 SELECT *  FROM foglamp.readings WHERE id >= 0;
 
@@ -230,6 +541,9 @@ DELETE FROM foglamp.configuration WHERE key='OMF_TRANS ';
 SELECT *  FROM foglamp.readings WHERE id >=  0;
 
 
+SELECT * FROM foglamp.readings WHERE id > 31180 and id <= 31180+1000 and asset_code like '%mouse%' ORDER by USER_ts;
+
+
 SELECT * FROM foglamp.readings WHERE id > 0 and id <= 0+50 and asset_code like '%gyrosc%' ORDER by USER_ts;
 
 SELECT * FROM foglamp.readings WHERE id > 0 and id <= 0+50 and asset_code  like '%mag%' ORDER by USER_ts;
@@ -407,4 +721,5 @@ SELECT * FROM foglamp.readings WHERE id > 24002 and asset_code like '%mouse%' OR
 
 SELECT * FROM foglamp.readings WHERE id > 1 and asset_code like '%acc%' ORDER by USER_ts;
 # 23982
+
 
